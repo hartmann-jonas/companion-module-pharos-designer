@@ -1,0 +1,30 @@
+{
+	"id": "pharos-controller",
+	"name": "pharos-controller",
+	"shortname": "pharos",
+	"description": "Module implements the HTTP API for Pharos Controllers",
+	"version": "0.0.0",
+	"license": "MIT",
+	"repository": "git+https://github.com/bitfocus/companion-module-your-module-name.git",
+	"bugs": "https://github.com/bitfocus/companion-module-your-module-name/issues",
+	"maintainers": [
+		{
+			"name": "Your name",
+			"email": "Your email"
+		}
+	],
+	"legacyIds": [],
+	"runtime": {
+		"type": "node18",
+		"api": "nodejs-ipc",
+		"apiVersion": "0.0.0",
+		"entrypoint": "../main.js"
+	},
+	"manufacturer": "Pharos",
+	"products": [
+		"Controller"
+	],
+	"keywords": [
+		"Pharos"
+	]
+}
