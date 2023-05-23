@@ -3,8 +3,9 @@ import { getActions } from './actions.js'
 import { getVariables } from './variables.js'
 import { getFeedbacks } from './feedbacks.js'
 import { UpgradeScripts } from './upgrades.js'
+import { Regex } from '@companion-module/base'
 
-import { PharosClient } from './pharos-controls/index.js'
+import { PharosClient } from './pharos.js'
 
 class PharosInstance extends InstanceBase {
 	constructor(internal) {
@@ -14,36 +15,57 @@ class PharosInstance extends InstanceBase {
 	async init(config) {
 		this.config = config
 
-		this.updateStatus(InstanceStatus.Ok)
+		this.updateStatus(InstanceStatus.Connecting)
 
 		this.updateActions() // export actions
 		this.updateFeedbacks() // export feedbacks
 		this.updateVariableDefinitions() // export variable definitions
 
-		if (Object.entries(this.config).length > 0) {
-			this.controller = new PharosClient()
-			await this.controller.authenticate(config.host, config.user, config.password)
-			// fill variables
-			// TODO: Maybe change the return of the getScenes to be .scenes immeadiatly
+		// this needs some serious rework, but idk how at the moment
+		this.controller = new PharosClient()
+		const authRes = await this.controller.authenticate(config.host, config.user, config.password)
+		// if validation didnt succeed
+		if (!authRes.success) {
+			this.updateStatus(InstanceStatus.ConnectionFailure)
+		} else if (authRes.success) {
+			this.updateStatus(InstanceStatus.Ok)
+			// fill variables for eventual use in companion
+			// FIXME: module crashes here when changing the ip to invalid one
 			this.groupsResponse = await this.controller.getGroups()
 			this.scenesResponse = await this.controller.getScenes()
+			this.timelinesResponse = await this.controller.getTimelines()
 			console.log('Storing variables...')
-			this.groups = this.groupsResponse.map(function(group){
+			console.log(this.groupsResponse.groups)
+			console.log(this.scenesResponse.scenes)
+			console.log(this.timelinesResponse.timelines)
+			// QUESTION: the ?. is a nasty hack but it should always work (hopefully)
+			this.groups = this.groupsResponse.groups?.map(function (group) {
 				return { id: group.num, label: group.name }
 			})
-			this.scenes = this.scenesResponse.map(function(scene){
+			this.scenes = this.scenesResponse.scenes?.map(function (scene) {
 				return { id: scene.num, label: scene.name }
 			})
-			this.setVariableValues({
-				'groups': this.groupsResponse,
-				'scenes': this.scenesResponse
+			this.timelines = this.timelinesResponse.timelines?.map(function (timeline) {
+				return { id: timeline.num, label: timeline.name }
 			})
-
+			// QUESTION: this is really optional rn i dont know if people would
+			// get a real use out of it, or if it just wastes performance
+			this.setVariableValues({
+				groups: this.groupsResponse.groups,
+				scenes: this.scenesResponse.scenes,
+				timelines: this.timelinesResponse.timelines,
+			})
 		}
 	}
 
 	// When module gets deleted
 	async destroy() {
+		if (this.controller) {
+			this.controller.logout()
+			// QUESTION: is that right?
+			// delete this.controller
+		}
+		this,this.updateStatus(InstanceStatus.Disconnected)
 		this.log('debug', 'destroy')
 	}
 
@@ -60,21 +82,19 @@ class PharosInstance extends InstanceBase {
 				id: 'host',
 				label: 'Target IP',
 				width: 12,
-				//regex: Regex.IP,
+				regex: Regex.IP,
 			},
 			{
 				type: 'textinput',
 				id: 'user',
 				label: 'User',
 				width: 6,
-				regex: Regex.USER,
 			},
 			{
 				type: 'textinput',
 				id: 'password',
 				label: 'Password',
 				width: 6,
-				regex: Regex.PASSWORD,
 			},
 		]
 	}
@@ -94,15 +114,28 @@ class PharosInstance extends InstanceBase {
 		this.setVariableDefinitions(variables)
 	}
 
-	async controlGroup(options) {
-		console.log("Controlling group...")
-		const res = await this.controller.controlGroup('master-intensity', options)
+	async controlTimeline(action, options) {
+		const res = await this.controller.controlTimeline(action, options)
+		if (!res.success) {
+			this.updateStatus(InstanceStatus.UnknownError, res.error)
+		}
 		console.log(res)
 	}
 
-	async controlTimeline(action, options) {
-		console.log("Controlling timeline...")
-		const res = await this.controller.controlTimeline(action, options)
+	async controlGroup(action, options) {
+		const res = await this.controller.controlGroup(action, options)
+		if (!res.success) {
+			this.updateStatus(InstanceStatus.UnknownError, res.error)
+		}
+		// TODO: delete those console.log´s
+		console.log(res)
+	}
+
+	async controlScene(action, options) {
+		const res = await this.controller.controlScene(action, options)
+		if (!res.success) {
+			this.updateStatus(InstanceStatus.UnknownError, res.error)
+		}
 		console.log(res)
 	}
 }
