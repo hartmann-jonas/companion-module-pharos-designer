@@ -1,3 +1,7 @@
+const timeoutController = new AbortController()
+// 20 second timeout for the fetches
+const timeoutId = setTimeout(() => timeoutController.abort(), 20000)
+
 /**
  * Class to define the PharosClient
  * @author Jonas Hartmann
@@ -13,7 +17,7 @@ export class PharosClient {
 			expiry: '',
 		}
 	}
-	// this needs optimization
+	// HACK: this needs optimization
 	// i think this is a really stupid way of doing this
 
 	// there needs to be a call to the API at least once
@@ -22,7 +26,7 @@ export class PharosClient {
 		const interval = setInterval(async () => {
 			console.log('Updating token...')
 			await this.getGroups()
-		}, 1000 * 60 * 4.5)
+		}, 10000)
 	}
 	/**
 	 * Authenticate the client with the Pharos controller using the provided username and password.
@@ -43,6 +47,7 @@ export class PharosClient {
 			const response = await fetch(url, {
 				method: 'POST',
 				body: body,
+				signal: timeoutController.signal,
 			})
 
 			if (response.ok) {
@@ -53,7 +58,7 @@ export class PharosClient {
 					success: true,
 					token: this.token,
 				}
-				this.updateToken()
+				//this.updateToken()
 				return data
 			} else if (response.status === 400) {
 				return {
@@ -169,6 +174,7 @@ export class PharosClient {
 		const headers = new Headers()
 		// TODO: unneccisary?? related to the 204 response
 		//headers.append('Content-Type', 'application/json')
+		headers.append('Content-Type', 'application/json')
 		headers.append('Authorization', `Bearer ${this.token}`)
 		const body = {
 			action,
@@ -273,7 +279,7 @@ export class PharosClient {
 
 		const headers = new Headers()
 		// TODO: unneccisary?? related to the 204 response
-		//headers.append('Content-Type', 'application/json')
+		headers.append('Content-Type', 'application/json')
 		headers.append('Authorization', `Bearer ${this.token}`)
 		const body = {
 			action,
@@ -379,7 +385,7 @@ export class PharosClient {
 
 		const headers = new Headers()
 		// TODO: unneccisary?? related to the 204 response
-		//headers.append('Content-Type', 'application/json')
+		headers.append('Content-Type', 'application/json')
 		headers.append('Authorization', `Bearer ${this.token}`)
 		const body = {
 			action,

@@ -4,6 +4,12 @@ export function getActions() {
 			name: 'Control Timeline',
 			options: [
 				{
+					id: 'info-text-fade',
+					type: 'static-text',
+					label: 'Important',
+					value: 'The fade time set in Companion will always overwrite the default fade time!',
+				},
+				{
 					id: 'action',
 					type: 'dropdown',
 					label: 'Action',
@@ -62,12 +68,12 @@ export function getActions() {
 					id: 'fade',
 					type: 'number',
 					label: 'Fade (seconds)',
-					default: 0,
 					min: 0,
 				},
 			],
 			callback: (event) => {
 				event = event.options
+				console.log(event)
 				const action = event.action
 				delete event.action
 				const options = event
@@ -77,6 +83,12 @@ export function getActions() {
 		controlGroups: {
 			name: 'Control Groups',
 			options: [
+				{
+					id: 'info-text-fade',
+					type: 'static-text',
+					label: 'Important',
+					value: 'The fade time set in Companion will always overwrite the default fade time!',
+				},
 				{
 					id: 'num',
 					type: 'number',
@@ -106,7 +118,7 @@ export function getActions() {
 					id: 'fade',
 					type: 'number',
 					label: 'Fade (seconds)',
-					default: 0,
+					min: 0,
 				},
 			],
 			callback: (event) => {
@@ -122,6 +134,12 @@ export function getActions() {
 		controlScenes: {
 			name: 'Control Scenes',
 			options: [
+				{
+					id: 'info-text-fade',
+					type: 'static-text',
+					label: 'Important',
+					value: 'The fade time set in Companion will always overwrite the default fade time!',
+				},
 				{
 					id: 'action',
 					type: 'dropdown',
@@ -146,9 +164,7 @@ export function getActions() {
 					id: 'fade',
 					type: 'number',
 					label: 'Fade (seconds)',
-					default: 0,
 					min: 0,
-					required: false,
 				}
 			],
 			callback: (event) => {

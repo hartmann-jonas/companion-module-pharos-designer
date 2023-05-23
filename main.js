@@ -23,6 +23,7 @@ class PharosInstance extends InstanceBase {
 
 		// this needs some serious rework, but idk how at the moment
 		this.controller = new PharosClient()
+		this.log('debug', 'Authenticating...')
 		const authRes = await this.controller.authenticate(config.host, config.user, config.password)
 		// if validation didnt succeed
 		if (!authRes.success) {
@@ -34,11 +35,8 @@ class PharosInstance extends InstanceBase {
 			this.groupsResponse = await this.controller.getGroups()
 			this.scenesResponse = await this.controller.getScenes()
 			this.timelinesResponse = await this.controller.getTimelines()
-			console.log('Storing variables...')
-			console.log(this.groupsResponse.groups)
-			console.log(this.scenesResponse.scenes)
-			console.log(this.timelinesResponse.timelines)
-			// QUESTION: the ?. is a nasty hack but it should always work (hopefully)
+			this.log('debug', 'Storing variables...')
+			// HACK: the ?. is a nasty hack but it should always work (hopefully)
 			this.groups = this.groupsResponse.groups?.map(function (group) {
 				return { id: group.num, label: group.name }
 			})
@@ -119,7 +117,7 @@ class PharosInstance extends InstanceBase {
 		if (!res.success) {
 			this.updateStatus(InstanceStatus.UnknownError, res.error)
 		}
-		console.log(res)
+		this.log('debug', `controlTimeline success: ${res.success}`)
 	}
 
 	async controlGroup(action, options) {
@@ -127,8 +125,8 @@ class PharosInstance extends InstanceBase {
 		if (!res.success) {
 			this.updateStatus(InstanceStatus.UnknownError, res.error)
 		}
-		// TODO: delete those console.log´s
-		console.log(res)
+		// TODO: delete those this.log´s
+		this.log('debug', `controlGroup success: ${res.success}`)
 	}
 
 	async controlScene(action, options) {
@@ -136,7 +134,7 @@ class PharosInstance extends InstanceBase {
 		if (!res.success) {
 			this.updateStatus(InstanceStatus.UnknownError, res.error)
 		}
-		console.log(res)
+		this.log('debug', `controlScene success: ${res.success}`)
 	}
 }
 
