@@ -13,58 +13,137 @@ class PharosInstance extends InstanceBase {
 	}
 
 	async init(config) {
-		this.config = config
-
-		this.updateStatus(InstanceStatus.Connecting)
-
-		this.updateActions() // export actions
-		this.updateFeedbacks() // export feedbacks
-		this.updateVariableDefinitions() // export variable definitions
-
-		// this needs some serious rework, but idk how at the moment
-		this.controller = new PharosClient()
-		this.log('debug', 'Authenticating...')
-		const authRes = await this.controller.authenticate(config.host, config.user, config.password)
-		// if validation didnt succeed
-		if (!authRes.success) {
-			this.updateStatus(InstanceStatus.ConnectionFailure)
-		} else if (authRes.success) {
-			this.updateStatus(InstanceStatus.Ok)
-			// fill variables for eventual use in companion
-			// FIXME: module crashes here when changing the ip to invalid one
-			this.groupsResponse = await this.controller.getGroups()
-			this.scenesResponse = await this.controller.getScenes()
-			this.timelinesResponse = await this.controller.getTimelines()
-			this.log('debug', 'Storing variables...')
-			// HACK: the ?. is a nasty hack but it should always work (hopefully)
-			this.groups = this.groupsResponse.groups?.map(function (group) {
-				return { id: group.num, label: group.name }
-			})
-			this.scenes = this.scenesResponse.scenes?.map(function (scene) {
-				return { id: scene.num, label: scene.name }
-			})
-			this.timelines = this.timelinesResponse.timelines?.map(function (timeline) {
-				return { id: timeline.num, label: timeline.name }
-			})
-			// QUESTION: this is really optional rn i dont know if people would
-			// get a real use out of it, or if it just wastes performance
-			this.setVariableValues({
-				groups: this.groupsResponse.groups,
-				scenes: this.scenesResponse.scenes,
-				timelines: this.timelinesResponse.timelines,
-			})
-		}
+		this.startup(config)
 	}
 
 	// When module gets deleted
 	async destroy() {
-		if (this.controller) {
+		if (this.controller !== undefined) {
 			this.controller.logout()
-			// QUESTION: is that right?
-			// delete this.controller
+			delete this.controller
 		}
-		this,this.updateStatus(InstanceStatus.Disconnected)
+		if (this.poll_interval !== undefined) {
+			clearInterval(this.poll_interval)
+			delete this.poll_interval
+		}
+		this, this.updateStatus(InstanceStatus.Disconnected)
 		this.log('debug', 'destroy')
+	}
+
+	startup(config) {
+		this.config = config
+
+		this.updateActions() // export actions
+		this.updateFeedbacks() // export feedbacks
+		this.updateVariableDefinitions() // export variable definitions
+		this.initController()
+	}
+
+	async initController() {
+		const self = this
+		if (this.controllerTimer) {
+			clearInterval(this.controllerTimer)
+			delete this.controllerTimer
+		}
+
+		if (this.poll_interval) {
+			clearInterval(this.poll_interval)
+			delete this.poll_interval
+		}
+
+		if (this.socket !== undefined) {
+			this.socket.destroy()
+			delete this.socket
+		}
+
+		if (this.config.host) {
+			this.controller = new PharosClient()
+			const authRes = await this.controller.authenticate(this.config.host, this.config.user, this.config.password)
+			this.log('debug', authRes.error)
+			if (!authRes.success) {
+				if (self.lastStatus != InstanceStatus.UnknownError) {
+					self.updateStatus(
+						InstanceStatus.UnknownError,
+						'Network error'
+					)((self.lastStatus = InstanceStatus.UnknownError)),
+						'Network error'
+					self.log('error', 'A network error occured while trying to authenticate')
+				}
+				self.pharosConnected = false
+				// set timer to retry connection in 10s
+				if (self.controllerTimer) {
+					clearInterval(self.controllerTimer)
+					delete self.controllerTimer
+				}
+				delete self.controller
+				self.controllerTimer = setInterval(function () {
+					self.updateStatus(InstanceStatus.ConnectionFailure, 'Retrying connection')
+					self.initController()
+				}, 10000)
+			} else if (authRes.success) {
+				self.connect_time = Date.now()
+				if (self.lastStatus != InstanceStatus.Ok) {
+					self.updateStatus(InstanceStatus.Ok, 'Connected')
+					self.log('info', 'Connected')
+					self.lastStatus = InstanceStatus.Ok
+				}
+				self.pharosConnected = true
+				// start the 4.5min timer for new tokens
+				if (this.poll_interval) {
+					delete this.poll_interval
+				}
+				this.pollTime = 270000 // 4.5min intervals
+				this.poll_interval = setInterval(this.poll.bind(this), this.pollTime) //ms for poll
+				this.poll()
+				// TODO: i am not sure if i want to keep this
+				this.groupsResponse = await this.controller.getGroups()
+				this.scenesResponse = await this.controller.getScenes()
+				this.timelinesResponse = await this.controller.getTimelines()
+				this.log('debug', 'Storing variables...')
+				this.groups = this.groupsResponse.groups?.map(function (group) {
+					return { id: group.num, label: group.name }
+				})
+				this.scenes = this.scenesResponse.scenes?.map(function (scene) {
+					return { id: scene.num, label: scene.name }
+				})
+				this.timelines = this.timelinesResponse.timelines?.map(function (timeline) {
+					return { id: timeline.num, label: timeline.name }
+				})
+			}
+		}
+	}
+
+	async poll() {
+		this.log('debug', 'Polling new token')
+		let checkHours = false
+
+		// re-connect?
+		if (!this.pharosConnected) {
+			this.initController()
+			return
+		}
+
+		// wait for class response before sending status requests
+		if (this.controller === undefined) {
+			this.log('error', 'Controller undefined')
+			return
+		}
+
+		// first time or every 4.5mins
+		if (this.lastHours === undefined || Date.now() - this.lastHours > 300000) {
+			this.log('debug', 'First time poll')
+			checkHours = true
+			this.lastHours = Date.now()
+		}
+
+		// get the new token
+		const res = await this.controller.getGroups()
+		if (!res.success || res.token == undefined) {
+			this.log('error', 'Polling the new token failed')
+			await this.initController()
+		} else if (res.success) {
+			this.log('info', 'Recieved new token: ' + res.token)
+		}
 	}
 
 	async configUpdated(config) {
@@ -125,7 +204,6 @@ class PharosInstance extends InstanceBase {
 		if (!res.success) {
 			this.updateStatus(InstanceStatus.UnknownError, res.error)
 		}
-		// TODO: delete those this.log´s
 		this.log('debug', `controlGroup success: ${res.success}`)
 	}
 
