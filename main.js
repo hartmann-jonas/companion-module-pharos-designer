@@ -32,6 +32,11 @@ class PharosInstance extends InstanceBase {
 
 	startup(config) {
 		this.config = config
+		this.actionData = {
+			groups: [],
+			scenes: [],
+			timelines: [],
+		}
 
 		this.updateActions() // export actions
 		this.updateFeedbacks() // export feedbacks
@@ -84,7 +89,7 @@ class PharosInstance extends InstanceBase {
 				self.connect_time = Date.now()
 				if (self.lastStatus != InstanceStatus.Ok) {
 					self.updateStatus(InstanceStatus.Ok, 'Connected')
-					self.log('info', 'Connected')
+					self.log('info', 'Controller connected')
 					self.lastStatus = InstanceStatus.Ok
 				}
 				self.pharosConnected = true
@@ -95,20 +100,26 @@ class PharosInstance extends InstanceBase {
 				this.pollTime = 270000 // 4.5min intervals
 				this.poll_interval = setInterval(this.poll.bind(this), this.pollTime) //ms for poll
 				this.poll()
-				// TODO: i am not sure if i want to keep this
 				this.groupsResponse = await this.controller.getGroups()
 				this.scenesResponse = await this.controller.getScenes()
 				this.timelinesResponse = await this.controller.getTimelines()
 				this.log('debug', 'Storing variables...')
-				this.groups = this.groupsResponse.groups?.map(function (group) {
+				// filter groups first because some dont have an id
+				this.filteredGroups = this.groupsResponse.groups.filter(function (group) {
+					if (group.num) {
+						return group
+					}
+				})
+				this.actionData.groups = this.filteredGroups.map(function (group) {
 					return { id: group.num, label: group.name }
 				})
-				this.scenes = this.scenesResponse.scenes?.map(function (scene) {
+				this.actionData.scenes = this.scenesResponse.scenes?.map(function (scene) {
 					return { id: scene.num, label: scene.name }
 				})
-				this.timelines = this.timelinesResponse.timelines?.map(function (timeline) {
+				this.actionData.timelines = this.timelinesResponse.timelines?.map(function (timeline) {
 					return { id: timeline.num, label: timeline.name }
 				})
+				this.updateActions() // update actions to have the actionData
 			}
 		}
 	}
@@ -139,10 +150,10 @@ class PharosInstance extends InstanceBase {
 		// get the new token
 		const res = await this.controller.getGroups()
 		if (!res.success || res.token == undefined) {
-			this.log('error', 'Polling the new token failed')
+			this.log('error', 'Polling new token failed')
 			await this.initController()
 		} else if (res.success) {
-			this.log('info', 'Recieved new token: ' + res.token)
+			this.log('debug', 'Recieved new token')
 		}
 	}
 

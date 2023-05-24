@@ -3,10 +3,10 @@
 ## This module only works in Designer Projects where API v6 or newer is selected!
 
 ### Requirements:
-* Pharos Designer
+* The controller needs to have an user and password.
 * At least API v6.0
-API v6.0 is available from Designer 2 version 
 
 ### Supported Controllers
 * LPC Series
 * TPC (not tested but should work)
+* VLC Series (not tested but should work)

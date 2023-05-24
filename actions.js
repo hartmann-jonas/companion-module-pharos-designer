@@ -7,7 +7,7 @@ export function getActions() {
 					id: 'info-text-fade',
 					type: 'static-text',
 					label: 'Important',
-					value: 'The fade time set in Companion will always overwrite the default fade time!',
+					value: 'The fade time set in Companion will always overwrite the default fade time',
 				},
 				{
 					id: 'action',
@@ -26,13 +26,10 @@ export function getActions() {
 					required: true,
 				},
 				{
+					type: 'dropdown',
 					id: 'num',
-					type: 'number',
-					label: 'Timeline Number',
-					default: 1,
-					step: 1,
-					min: 0,
-					required: true,
+					label: 'Timeline',
+					choices: this.actionData.timelines,
 				},
 				/* 	QUESTION: why is this not working?
 					https://bitfocus.github.io/companion-module-base/interfaces/CompanionInputFieldStaticText.html
@@ -55,6 +52,9 @@ export function getActions() {
 					type: 'textinput',
 					label: 'Rate (0.1 to 1 is default timeline rate)',
 					isVisible: (options) => options.action == 'set_rate',
+					min: 0,
+					max: 1,
+					default: 1,
 					required: true,
 				},
 				{
@@ -90,22 +90,11 @@ export function getActions() {
 					value: 'The fade time set in Companion will always overwrite the default fade time!',
 				},
 				{
-					id: 'num',
-					type: 'number',
-					label: 'Group Number',
-					default: 1,
-					step: 1,
-					min: 0,
-					required: true,
-				},
-				/* 	QUESTION: can i make something like this work?
-				{
-					type: 'multidropdown',
+					type: 'dropdown',
 					id: 'num',
 					label: 'Groups',
-					choices: this.groups,
-					default: this.groups:id
-				},*/
+					choices: this.actionData.groups,
+				},
 				{
 					id: 'level',
 					type: 'number',
@@ -128,6 +117,7 @@ export function getActions() {
 				// a new input field needs to be added
 				event = event.options
 				const options = event
+				console.log(options)
 				this.controlGroup('master_intensity', options)
 			},
 		},
@@ -152,13 +142,10 @@ export function getActions() {
 					default: 'start',
 				},
 				{
+					type: 'dropdown',
 					id: 'num',
-					type: 'number',
-					label: 'Scene Number',
-					default: 0,
-					step: 1,
-					min: 0,
-					required: true,
+					label: 'Scenes',
+					choices: this.actionData.scenes,
 				},
 				{
 					id: 'fade',
