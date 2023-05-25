@@ -3,9 +3,7 @@
 	"version": "0.1.0",
 	"main": "main.js",
 	"scripts": {
-		"format": "prettier -w .",
-		"lint:raw": "eslint --ext .ts --ext .js --ignore-pattern dist --ignore-pattern pkg",
-		"lint": "yarn lint:raw ."
+		"format": "prettier -w ."
 	},
 	"type": "module",
 	"license": "MIT",
