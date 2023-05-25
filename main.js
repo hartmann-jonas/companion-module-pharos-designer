@@ -67,11 +67,8 @@ class PharosInstance extends InstanceBase {
 			this.log('debug', authRes.error)
 			if (!authRes.success) {
 				if (self.lastStatus != InstanceStatus.UnknownError) {
-					self.updateStatus(
-						InstanceStatus.UnknownError,
-						'Network error'
-					)((self.lastStatus = InstanceStatus.UnknownError)),
-						'Network error'
+					self.updateStatus(InstanceStatus.UnknownError, 'Network error')
+					self.lastStatus = InstanceStatus.UnknownError
 					self.log('error', 'A network error occured while trying to authenticate')
 				}
 				self.pharosConnected = false
@@ -165,6 +162,14 @@ class PharosInstance extends InstanceBase {
 	// Return config fields for web config
 	getConfigFields() {
 		return [
+			{
+				type: 'static-text',
+				id: 'info',
+				width: 12,
+				label: 'Information',
+				value:
+					'This module requires API v6 in your Designer 2 project.<br/>API v6 is available from Pharos Designer Version 2.9 upwards and can be selected under Project > Project Properties > Controller API.',
+			},
 			{
 				type: 'textinput',
 				id: 'host',

@@ -21,11 +21,6 @@
 		"entrypoint": "../main.js"
 	},
 	"manufacturer": "Pharos",
-	"products": [
-		"Designer Controller"
-	],
-	"keywords": [
-		"Pharos",
-		"Designer"
-	]
+	"products": ["Designer Controller"],
+	"keywords": ["Pharos", "Designer"]
 }

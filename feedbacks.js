@@ -1,8 +1,9 @@
 import { combineRgb } from '@companion-module/base'
 
 export function getFeedbacks() {
+	// TODO: implement feedbacks
 	const feedbacks = {}
-	feedbacks['resultCheck'] = {
+	/*feedbacks['resultCheck'] = {
 		name: 'Example Feedback',
 		type: 'boolean',
 		label: 'Channel State',
@@ -28,6 +29,6 @@ export function getFeedbacks() {
 				return false
 			}
 		},
-	}
+	}*/
 	return feedbacks
 }

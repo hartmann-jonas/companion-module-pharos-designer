@@ -3,12 +3,14 @@ export function getActions() {
 		controlTimeline: {
 			name: 'Control Timeline',
 			options: [
+				/* 	QUESTION: why is this not working?
+					https://bitfocus.github.io/companion-module-base/interfaces/CompanionInputFieldStaticText.html
 				{
 					id: 'info-text-fade',
 					type: 'static-text',
 					label: 'Important',
 					value: 'The fade time set in Companion will always overwrite the default fade time',
-				},
+				},*/
 				{
 					id: 'action',
 					type: 'dropdown',
@@ -31,22 +33,6 @@ export function getActions() {
 					label: 'Timeline',
 					choices: this.actionData.timelines,
 				},
-				/* 	QUESTION: why is this not working?
-					https://bitfocus.github.io/companion-module-base/interfaces/CompanionInputFieldStaticText.html
-				{
-					id: 'info-text-rate',
-					type: 'static-text',
-					label: 'Information',
-					value: 'The Rate input ONLY takes values containing a number, where 1.0 means the timeline’s default rate. Example: 0.1 equals 10% of the default rate; 0.8 equals 80% of the default rate',
-					isVisible: (options) => options.action == 'set_rate' 
-				},
-				{
-					id: 'info-text-position',
-					type: 'static-text',
-					label: 'Information',
-					value: 'The Position input ONLY takes values containing a number from 0 to 1, that represents a fraction of the timeline. Example: 20min timeline',
-					isVisible: (options) => options.action == 'set_position'
-				},*/
 				{
 					id: 'rate',
 					type: 'textinput',
@@ -83,12 +69,12 @@ export function getActions() {
 		controlGroups: {
 			name: 'Control Groups',
 			options: [
-				{
+				/*{
 					id: 'info-text-fade',
 					type: 'static-text',
 					label: 'Important',
 					value: 'The fade time set in Companion will always overwrite the default fade time!',
-				},
+				},*/
 				{
 					type: 'dropdown',
 					id: 'num',
@@ -124,12 +110,12 @@ export function getActions() {
 		controlScenes: {
 			name: 'Control Scenes',
 			options: [
-				{
+				/*{
 					id: 'info-text-fade',
 					type: 'static-text',
 					label: 'Important',
 					value: 'The fade time set in Companion will always overwrite the default fade time!',
-				},
+				},*/
 				{
 					id: 'action',
 					type: 'dropdown',
@@ -152,7 +138,7 @@ export function getActions() {
 					type: 'number',
 					label: 'Fade (seconds)',
 					min: 0,
-				}
+				},
 			],
 			callback: (event) => {
 				event = event.options
@@ -160,7 +146,7 @@ export function getActions() {
 				delete event.action
 				const options = event
 				this.controlScene(action, options)
-			}
-		}
+			},
+		},
 	}
 }
